@@ -13,6 +13,8 @@ namespace Wrapstone {
 
 		internal abstract unsafe void ParseDetails(CsDetailBase* detail);
 
+		public OpT this[int index] => Operands[index];
+
 		public void Deconstruct(out OpT _0, out OpT _1) {
 			Debug.Assert(Operands.Count == 2);
 			_0 = Operands[0];
