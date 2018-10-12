@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlienAngel", "AlienAngel\AlienAngel.csproj", "{57AF9AE1-E89F-4763-9479-2D4C38AC76C0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wrapstone", "Wrapstone\Wrapstone.csproj", "{60398570-9109-4C4B-AC3B-FD5FD6C0D84F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{57AF9AE1-E89F-4763-9479-2D4C38AC76C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57AF9AE1-E89F-4763-9479-2D4C38AC76C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57AF9AE1-E89F-4763-9479-2D4C38AC76C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57AF9AE1-E89F-4763-9479-2D4C38AC76C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60398570-9109-4C4B-AC3B-FD5FD6C0D84F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60398570-9109-4C4B-AC3B-FD5FD6C0D84F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60398570-9109-4C4B-AC3B-FD5FD6C0D84F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60398570-9109-4C4B-AC3B-FD5FD6C0D84F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
