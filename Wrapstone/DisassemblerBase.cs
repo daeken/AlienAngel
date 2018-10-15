@@ -23,7 +23,10 @@ namespace Wrapstone {
 				throw new NotSupportedException();
 		}
 
-		public unsafe List<InsnT> Disassemble(AddrT addr, Span<byte> code, int count=0) {
+		public InsnT DisassembleOne(AddrT addr, Span<byte> code) =>
+			Disassemble(addr, code, 1).FirstOrDefault();
+
+		public unsafe List<InsnT> Disassemble(AddrT addr, Span<byte> code, int count) {
 			fixed(byte* codePtr = &MemoryMarshal.GetReference(code)) {
 				var ocount = cs_disasm(Handle, codePtr, (IntPtr) code.Length, Convert.ToUInt64(addr), (UIntPtr) count, out var insns);
 				var oinsns = Enumerable.Range(0, (int) ocount).Select(i => ParseInsn(insns[i])).ToList();
@@ -41,8 +44,8 @@ namespace Wrapstone {
 			typed.Address = (AddrT) (object) insn.Address;
 			typed.Length = insn.Size;
 			typed.Opcode = (OpcodeT) (object) insn.Id;
-			typed.Mnemonic = Marshal.PtrToStringAnsi((IntPtr) insn.Mnemonic, 32).Split('\0', 2)[0];
-			typed.OpStr = Marshal.PtrToStringAnsi((IntPtr) insn.OpStr, 160).Split('\0', 2)[0];
+			//typed.Mnemonic = Marshal.PtrToStringAnsi((IntPtr) insn.Mnemonic, 32).Split('\0', 2)[0];
+			//typed.OpStr = Marshal.PtrToStringAnsi((IntPtr) insn.OpStr, 160).Split('\0', 2)[0];
 
 			if(Detail && insn.Detail != null)
 				typed.ParseDetails(insn.Detail);

@@ -18,4 +18,8 @@
       </Reference>
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="MessagePack" Version="1.7.3.4" />
+    </ItemGroup>
+
 </Project>

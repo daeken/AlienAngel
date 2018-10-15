@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using MessagePack;
 using PrettyPrinter;
 
 namespace Wrapstone.Arm64 {
@@ -723,33 +726,106 @@ namespace Wrapstone.Arm64 {
 		V31
 	}
 
+	public enum ConditionCode {
+		Invalid = 0,
+		Eq = 1,     //< Equal
+		Ne = 2,     //< Not equal:                 Not equal, or unordered
+		Hs = 3,     //< Unsigned higher or same:   >, ==, or unordered
+		Lo = 4,     //< Unsigned lower or same:    Less than
+		Mi = 5,     //< Minus, negative:           Less than
+		Pl = 6,     //< Plus, positive or zero:    >, ==, or unordered
+		Vs = 7,     //< Overflow:                  Unordered
+		Vc = 8,     //< No overflow:               Ordered
+		Hi = 9,     //< Unsigned higher:           Greater than, or unordered
+		Ls = 10,    //< Unsigned lower or same:    Less than or equal
+		Ge = 11,    //< Greater than or equal:     Greater than or equal
+		Lt = 12,    //< Less than:                 Less than, or unordered
+		Gt = 13,    //< Signed greater than:       Greater than
+		Le = 14,    //< Signed less than or equal: <, ==, or unordered
+		Al = 15,    //< Always (unconditional):    Always (unconditional)
+		Nv = 16     //< Always (unconditional):   Always (unconditional)
+	}
+
+	public enum Barrier {
+		Invalid = 0,
+		Oshld = 0x1,
+		Oshst = 0x2,
+		Osh =   0x3,
+		Nshld = 0x5,
+		Nshst = 0x6,
+		Nsh =   0x7,
+		Ishld = 0x9,
+		Ishst = 0xa,
+		Ish =   0xb,
+		Ld =    0xd,
+		St =    0xe,
+		Sy =    0xf
+	}
+
+	[Union(0, typeof(RegOperand))]
+	[Union(1, typeof(ImmOperand))]
+	[Union(2, typeof(FpOperand))]
+	[Union(3, typeof(MemOperand))]
+	[Union(4, typeof(BarrierOperand))]
+	[MessagePackObject]
 	public abstract class Operand {
 		public static implicit operator Reg(Operand op) => op is RegOperand rop ? rop.Reg : Reg.Invalid;
+		public static implicit operator ulong(Operand op) => op is ImmOperand imm ? imm.Value : throw new NotImplementedException();
 	}
+	[MessagePackObject]
 	public class RegOperand : Operand {
+		[Key(0)]
 		public readonly Reg Reg;
 		public RegOperand(Reg reg) => Reg = reg;
 		public static implicit operator Reg(RegOperand op) => op.Reg;
+		public override string ToString() => Reg.ToString().ToLower();
 	}
+	[MessagePackObject]
 	public class ImmOperand : Operand {
+		[Key(0)]
 		public readonly ulong Value;
 		public ImmOperand(ulong value) => Value = value;
+		public override string ToString() => $"0x{Value:X}";
 	}
+	[MessagePackObject]
+	public class FpOperand : Operand {
+		[Key(0)]
+		public readonly double Value;
+		public FpOperand(double value) => Value = value;
+		public override string ToString() => Value.ToString();
+	}
+	[MessagePackObject]
 	public class MemOperand : Operand {
-		public readonly Reg Base, Index;
+		[Key(0)]
+		public readonly Reg Base;
+		[Key(1)]
+		public readonly Reg Index;
+		[Key(2)]
 		public readonly int Offset;
 		public MemOperand(Reg @base, Reg index, int offset) {
 			Base = @base;
 			Index = index;
 			Offset = offset;
 		}
+		public override string ToString() => $"[{Base}+{Index}+{Offset}]";
+	}
+	[MessagePackObject]
+	public class BarrierOperand : Operand {
+		[Key(0)]
+		public readonly Barrier Value;
+		public BarrierOperand(Barrier value) => Value = value;
 	}
 
+	[MessagePackObject]
 	public class Instruction : InstructionBase<ulong, Opcode, Operand> {
-		public override string ToString() => $"{Address:X016} {Mnemonic} {OpStr}";
+		[Key(4)]
+		public ConditionCode Condition;
+
+		public override string ToString() => $"{Address:X016} {Opcode} {string.Join(", ", Operands.Select(x => x.ToPrettyString()))}";
 
 		internal override unsafe void ParseDetails(CsDetailBase* detail) {
 			var ad = (CsArm64Detail*) &detail->ArchSpecificPlaceholder;
+			Condition = (ConditionCode) ad->CC;
 			var ops = (CsArm64Op*) &ad->OpsPlaceholder;
 			for(var i = 0; i < ad->OpCount; ++i) {
 				var op = ops[i];
@@ -767,6 +843,19 @@ namespace Wrapstone.Arm64 {
 							*(int*) &op.Placeholder2
 						));
 						break;
+					case 4:
+						Operands.Add(new FpOperand(*(double*) &op.Placeholder0));
+						break;
+					case 65:
+					case 66:
+					case 67:
+					case 68:
+					case 69:
+						Operands.Add(null);
+						break;
+					case 70:
+						Operands.Add(new BarrierOperand(*(Barrier*) &op.Placeholder0));
+						break;
 					default:
 						throw new NotImplementedException($"Operand type {op.OpType} not supported");
 				}
@@ -776,5 +865,10 @@ namespace Wrapstone.Arm64 {
 	
 	public class Disassembler : DisassemblerBase<ulong, Instruction, Opcode, Operand> {
 		public Disassembler() : base(Architecture.Arm64, Mode.Arm) {}
+		
+		public IEnumerable<Instruction> Disassemble(ulong addr, Memory<byte> code) {
+			for(var off = 0UL; ; off += 4)
+				yield return DisassembleOne(addr + off, code.Slice((int) off).Span);
+		}
 	}
 }

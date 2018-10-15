@@ -1,15 +1,17 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using MessagePack;
 
 namespace Wrapstone {
+	[MessagePackObject]
 	public abstract class InstructionBase<AddrT, OpcodeT, OpT> where AddrT : struct {
-		public AddrT Address { get; internal set; }
-		public uint Length { get; internal set; }
-		public OpcodeT Opcode { get; internal set; }
-		public string Mnemonic { get; internal set; }
-		public string OpStr { get; internal set; }
+		[Key(0)] public AddrT Address;
+		[Key(1)] public uint Length;
+		[Key(2)] public OpcodeT Opcode;
 
-		public readonly List<OpT> Operands = new List<OpT>();
+		[Key(3)]
+		public List<OpT> Operands = new List<OpT>();
 
 		internal abstract unsafe void ParseDetails(CsDetailBase* detail);
 
